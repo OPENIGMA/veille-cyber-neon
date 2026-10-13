@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360" role="img" aria-label="placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00121a"/>
+      <stop offset="1" stop-color="#051025"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="360" fill="url(#g)"/>
+  <g fill="#00f5ff" fill-opacity="0.08">
+    <rect x="0" y="0" width="600" height="360"/>
+  </g>
+  <g fill="#00f5ff" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="18" text-anchor="middle">
+    <text x="50%" y="50%" fill="#00f5ff" fill-opacity="0.9" style="filter: drop-shadow(0 0 8px rgba(0,245,255,0.3))">VEILLE CYBER</text>
+    <text x="50%" y="62%" fill="#a9c3d6" font-size="12">Aucune vignette — image par défaut</text>
+  </g>
+</svg>
