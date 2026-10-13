@@ -2,12 +2,11 @@ name: Veille Cyber Update
 
 on:
   schedule:
-    - cron: "0 * * * *"   # toutes les heures
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   build:
@@ -37,21 +36,17 @@ jobs:
           echo "--- git status ---"
           git status --porcelain || true
           echo "--- last commits ---"
-          git --no-pager log -n 3 --pretty=oneline || true
+          git --no-pager log -n 5 --pretty=oneline || true
 
-      - name: Commit changes
+      - name: Commit & push (rebase-safe)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # authentification via GITHUB_TOKEN
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git fetch origin main
+          git pull --rebase origin main || true
           git add data/veille.json
           git diff --cached --quiet || git commit -m "MAJ veille cyber"
-
-      - name: Create Pull Request (if changes)
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "MAJ veille cyber"
-          title: "MAJ veille cyber"
-          body: "Mise à jour automatique des données de veille (workflow)"
-          base: main
-          branch: "veille-update-${{ github.run_id }}"
+          # push avec protection --force-with-lease pour éviter d'écraser si remote a avancé
+          git push --force-with-lease origin HEAD:main
