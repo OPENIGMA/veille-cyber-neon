@@ -1,5 +1,5 @@
 // assets/app.js
-// Ajouts : affichage d'une vignette si fournie, nettoyage d'HTML d'entrée, escape de texte avant insertion
+// Version robuste: sanitize + images + affichage corrigé
 
 const THEME_DATA = [
   {
@@ -350,7 +350,6 @@ async function loadData(isManualRefresh = false) {
     const data = await response.json();
     state.items = Array.isArray(data.items) ? data.items : fallbackItems;
 
-    // ensure minimal fields and consistent naming
     state.items = state.items.map(it => ({
       title: it.title || 'Sans titre',
       summary: it.summary || '',
