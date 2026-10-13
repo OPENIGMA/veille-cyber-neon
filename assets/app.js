@@ -1,3 +1,6 @@
+// assets/app.js
+// Ajouts : affichage d'une vignette si fournie, nettoyage d'HTML d'entrée, escape de texte avant insertion
+
 const THEME_DATA = [
   {
     id: "ordre_public",
@@ -122,31 +125,8 @@ const fallbackItems = [
     source: "Média local",
     date: new Date().toISOString(),
     summary: "Signalement de mobilisation de rue avec potentiel impact sur l’ordre public et la circulation.",
-    url: "#"
-  },
-  {
-    title: "Activité cyber et ciblage des infrastructures sensibles",
-    theme: "Sécurité & Criminalité",
-    subtheme: "Cybercriminalite",
-    region: "PACA",
-    department: "Bouches-du-Rhône",
-    city: "Marseille",
-    source: "Sources ouvertes",
-    date: new Date().toISOString(),
-    summary: "Réseaux ciblés sur des services publics et opérateurs sensibles; besoin de surveillance renforcée.",
-    url: "#"
-  },
-  {
-    title: "Mobilisation associatives / radicalisation politique",
-    theme: "Idéologies & Radicalités",
-    subtheme: "Radicalisation",
-    region: "PACA",
-    department: "Var",
-    city: "Toulon",
-    source: "Suivi territorial",
-    date: new Date().toISOString(),
-    summary: "Mise en veille sur mobilisation structurée et discours radicalisant dans l’espace public.",
-    url: "#"
+    url: "#",
+    image: null
   }
 ];
 
@@ -158,6 +138,15 @@ const state = {
   selectedCity: "Tous",
   items: []
 };
+
+function escapeHtml(unsafe) {
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   buildThemeFilters();
@@ -194,8 +183,8 @@ function buildThemeFilters() {
   const container = document.getElementById("themeFilters");
   const items = ["Tous", ...THEME_DATA.map(t => t.label)];
   container.innerHTML = items.map(label => `
-    <button class="chip ${state.selectedTheme === label ? "active" : ""}" data-kind="theme" data-value="${label}">
-      ${label}
+    <button class="chip ${state.selectedTheme === label ? "active" : ""}" data-kind="theme" data-value="${escapeHtml(label)}">
+      ${escapeHtml(label)}
     </button>
   `).join("");
 
@@ -212,8 +201,8 @@ function buildRegionFilters() {
   const container = document.getElementById("regionFilters");
   const items = ["Tous", ...GEOGRAPHY.regions.map(r => r.name)];
   container.innerHTML = items.map(label => `
-    <button class="chip ${state.selectedRegion === label ? "active" : ""}" data-kind="region" data-value="${label}">
-      ${label}
+    <button class="chip ${state.selectedRegion === label ? "active" : ""}" data-kind="region" data-value="${escapeHtml(label)}">
+      ${escapeHtml(label)}
     </button>
   `).join("");
 
@@ -237,8 +226,8 @@ function buildDepartmentFilters() {
   }
 
   container.innerHTML = items.map(label => `
-    <button class="chip ${state.selectedDepartment === label ? "active" : ""}" data-kind="department" data-value="${label}">
-      ${label}
+    <button class="chip ${state.selectedDepartment === label ? "active" : ""}" data-kind="department" data-value="${escapeHtml(label)}">
+      ${escapeHtml(label)}
     </button>
   `).join("");
 
@@ -264,8 +253,8 @@ function buildCityFilters() {
   }
 
   container.innerHTML = items.map(label => `
-    <button class="chip ${state.selectedCity === label ? "active" : ""}" data-kind="city" data-value="${label}">
-      ${label}
+    <button class="chip ${state.selectedCity === label ? "active" : ""}" data-kind="city" data-value="${escapeHtml(label)}">
+      ${escapeHtml(label)}
     </button>
   `).join("");
 
@@ -288,13 +277,13 @@ function renderFilters() {
 function getFilteredItems() {
   return state.items.filter(item => {
     const searchMatch = !state.search || (
-      item.title.toLowerCase().includes(state.search) ||
-      item.summary.toLowerCase().includes(state.search) ||
-      item.theme.toLowerCase().includes(state.search) ||
-      item.subtheme.toLowerCase().includes(state.search) ||
-      item.region.toLowerCase().includes(state.search) ||
-      item.department.toLowerCase().includes(state.search) ||
-      item.city.toLowerCase().includes(state.search)
+      (item.title && item.title.toLowerCase().includes(state.search)) ||
+      (item.summary && item.summary.toLowerCase().includes(state.search)) ||
+      (item.theme && item.theme.toLowerCase().includes(state.search)) ||
+      (item.subtheme && item.subtheme.toLowerCase().includes(state.search)) ||
+      (item.region && item.region.toLowerCase().includes(state.search)) ||
+      (item.department && item.department.toLowerCase().includes(state.search)) ||
+      (item.city && item.city.toLowerCase().includes(state.search))
     );
 
     const themeMatch = state.selectedTheme === "Tous" || item.theme === state.selectedTheme;
@@ -308,6 +297,7 @@ function getFilteredItems() {
 
 function formatDate(dateString) {
   const d = new Date(dateString);
+  if (isNaN(d)) return dateString;
   return d.toLocaleString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -321,22 +311,29 @@ function renderCards() {
   const cards = document.getElementById("cards");
   const filtered = getFilteredItems();
 
-  cards.innerHTML = filtered.map(item => `
+  cards.innerHTML = filtered.map(item => {
+    const imageHtml = item.image ? `
+      <div class="card-media">
+        <img src="${escapeHtml(item.image)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.svg';" />
+      </div>` : '';
+
+    return `
     <article class="card">
+      ${imageHtml}
       <div class="card-top">
-        <span class="badge">${item.subtheme}</span>
-        <span class="meta">${formatDate(item.date)}</span>
+        <span class="badge">${escapeHtml(item.subtheme || item.theme || '')}</span>
+        <span class="meta">${escapeHtml(formatDate(item.date))}</span>
       </div>
 
-      <h3>${item.title}</h3>
-      <p>${item.summary}</p>
+      <h3>${escapeHtml(item.title)}</h3>
+      <p>${escapeHtml(item.summary)}</p>
 
       <div class="card-footer">
-        <span>${item.region} / ${item.department} / ${item.city}</span>
-        <a href="${item.url || "#"}" target="_blank" rel="noreferrer">Voir</a>
+        <span>${escapeHtml([item.region, item.department, item.city].filter(Boolean).join(' / '))}</span>
+        <a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noreferrer">Voir</a>
       </div>
     </article>
-  `).join("");
+  `}).join("");
 
   document.getElementById("countAlerts").textContent = String(filtered.length);
   document.getElementById("countThemes").textContent = String(new Set(filtered.map(item => item.theme)).size);
@@ -352,7 +349,24 @@ async function loadData(isManualRefresh = false) {
 
     const data = await response.json();
     state.items = Array.isArray(data.items) ? data.items : fallbackItems;
+
+    // ensure minimal fields and consistent naming
+    state.items = state.items.map(it => ({
+      title: it.title || 'Sans titre',
+      summary: it.summary || '',
+      url: it.url || '#',
+      date: it.date || new Date().toISOString(),
+      theme: it.theme || it.category || 'Sécurité & Criminalité',
+      subtheme: it.subtheme || it.subTheme || it.sub || '',
+      region: it.region || '',
+      department: it.department || '',
+      city: it.city || '',
+      image: it.image || null,
+      source: it.source || ''
+    }));
+
   } catch (error) {
+    console.warn(error);
     state.items = fallbackItems;
   }
 
