@@ -126,7 +126,8 @@ def fetch_google_news(query: str, max_items: int = 6):
                         image = e.get('href')
                         break
         if not image:
-            m = re.search(r'<img[^>]+src=[\"']?([^\"' >]+)', summary_html or '', re.IGNORECASE)
+            pattern = r'<img[^>]+src=["\']?([^"\'>\s]+)'
+            m = re.search(pattern, summary_html or '', re.IGNORECASE)
             if m:
                 image = m.group(1)
 
