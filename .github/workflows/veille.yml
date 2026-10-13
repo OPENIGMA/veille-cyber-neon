@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -28,10 +30,26 @@ jobs:
       - name: Collect data
         run: python scripts/collect_feeds.py
 
+      - name: Show git status
+        run: |
+          echo "--- git status ---"
+          git status --porcelain || true
+          echo "--- last commits ---"
+          git --no-pager log -n 3 --pretty=oneline || true
+
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/veille.json
           git diff --cached --quiet || git commit -m "MAJ veille cyber"
-          git push
+
+      - name: Create Pull Request (if changes)
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "MAJ veille cyber"
+          title: "MAJ veille cyber"
+          body: "Mise à jour automatique des données de veille (workflow)"
+          base: main
+          branch: "veille-update-${{ github.run_id }}"
